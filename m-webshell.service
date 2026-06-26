@@ -1,0 +1,33 @@
+[Unit]
+Description=m-webshell — the keep for your web terminal
+Documentation=https://github.com/mufkuw/m-webshell
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/m-webshell serve --ttyd-uid 1000
+Restart=always
+RestartSec=5
+User=root
+Group=root
+NoNewPrivileges=true
+MemoryDenyWriteExecute=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/run/m-webshell
+PrivateTmp=true
+StateDirectory=m-webshell
+RuntimeDirectory=m-webshell
+RuntimeDirectoryMode=0750
+
+# Environment
+Environment=TTG_LISTEN=127.0.0.1:12479
+Environment=TTG_TTYD_SOCKET=/run/m-webshell/ttyd.sock
+Environment=TTG_TTYD_BIN=/usr/local/bin/ttyd
+Environment=TTG_SECRET_FILE=/etc/m-webshell/m-webshell.totp
+Environment=TTG_RATE=30/minute
+Environment=TTG_TOTP_WINDOW=0
+
+[Install]
+WantedBy=multi-user.target

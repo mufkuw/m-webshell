@@ -1,0 +1,5 @@
+/target/
+.opencode/
+.playwright-mcp/
+*.png
+*.yml

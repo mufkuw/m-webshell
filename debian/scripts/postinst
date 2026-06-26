@@ -1,0 +1,27 @@
+#!/bin/bash
+# Post-install script for m-webshell .deb package
+set -e
+
+# Create config directory
+mkdir -p /etc/m-webshell
+
+# Generate a default TOTP secret if none exists
+if [ ! -f /etc/m-webshell/m-webshell.totp ]; then
+    openssl rand -base32 24 | tr -d '=' | tr '/+' '_-' | head -c 32 > /etc/m-webshell/m-webshell.totp
+    chmod 640 /etc/m-webshell/m-webshell.totp
+    echo ""
+    echo "  m-webshell: generated new TOTP secret at /etc/m-webshell/m-webshell.totp"
+    echo "  Run 'm-webshell show-secret' to scan the QR code."
+    echo ""
+fi
+
+# Reload systemd and enable the service
+systemctl daemon-reload
+systemctl enable m-webshell
+
+echo ""
+echo "  m-webshell installed."
+echo "  Edit /etc/systemd/system/m-webshell.service to set --ttyd-uid, then:"
+echo "    systemctl start m-webshell"
+echo "    m-webshell show-secret"
+echo ""

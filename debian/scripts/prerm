@@ -1,0 +1,5 @@
+#!/bin/bash
+# Pre-remove script for m-webshell .deb package
+set -e
+systemctl stop m-webshell 2>/dev/null || true
+systemctl disable m-webshell 2>/dev/null || true
