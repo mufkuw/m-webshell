@@ -24,7 +24,7 @@ src/
   ws.rs            # WebSocket upgrade + bidirectional bridge
   totp.rs          # TOTP verification with skew window
   ratelimit.rs     # Rate limiter (governor, global bucket, per-instance)
-  ttyd.rs          # Child process management
+  backend.rs       # Backend (terminal engine) child process management
   show_secret.rs   # "show-secret" subcommand (URI + QR)
 tests/
   integration_tests.rs  # HTTP proxy, path rewrite, 404 cases
@@ -35,17 +35,17 @@ tests/
 
 - **Rate limiter is global, not per-IP.** `check_key` ignores the IP argument and uses a single `governor::NotKeyed` bucket. The `_ip: &IpAddr` parameter is unused.
 - **Unix socket path is communicated via env var.** `gate::UnixConnector` reads `_TTG_TTYD_SOCKET` from the environment (set by `main.rs` at startup from config), not from `AppState`.
-- **ttyd CLI arg differs from DESIGN.md.** The actual command passes `--interface <socket_path>` (not `--socket`). See `src/ttyd.rs:23-24`.
+- **Backend CLI arg.** The actual command passes `--interface <socket_path>`. See `src/backend.rs:21-24`.
 - **TOTP window is implemented manually.** `check()` iterates `-window..=window` (30s steps) via `generate()` rather than using `totp-rs`'s built-in `check()` (which only validates the exact current step). A separate `check_at()` method exists only in `#[cfg(test)]`.
 - **RFC test vector sanity check runs only in debug builds.** `src/totp.rs:37-39`: at `t=59` with the known secret, `generate(59)` must equal `"287082"`. Silently logged as error if it mismatches (doesn't panic).
-- **`ttyd` spawn failure is non-fatal.** `main.rs:65-69`: if ttyd can't start, the server continues running. Integration tests rely on this (they use `mock_ttyd.py` instead).
+- **Backend spawn failure is non-fatal.** `main.rs:65-69`: if the backend can't start, the server continues running. Integration tests rely on this (they use `mock_ttyd.py` instead).
 - **No CI, no pre-commit config.**
 
 ## Security invariants (enforced by design, verified from source)
 
 - Every auth failure → 404 (never 401/403): `src/gate.rs:93,98,103`
 - TOTP codes are never logged: `normalize_path()` replaces digits with `******` before logging
-- ttyd binds to a Unix socket only (no TCP port)
+- The terminal backend binds to a Unix socket only (no TCP port)
 - `show-secret` subcommand prints the provisioning URI + ANSI QR to stdout
 
 ## Test coverage

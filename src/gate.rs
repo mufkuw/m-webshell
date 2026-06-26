@@ -102,7 +102,7 @@ pub async fn gate_handler(
     let tail = caps.get(2).map(|m| m.as_str()).unwrap_or("");
     let rewritten_path = if tail.is_empty() { "/" } else { tail };
 
-    info!(%peer_ip, path = %normalized, "proxying to ttyd");
+    info!(%peer_ip, path = %normalized, "proxying to backend");
 
     let is_ws_upgrade = req.headers().get("upgrade")
         .and_then(|v| v.to_str().ok())
@@ -115,7 +115,7 @@ pub async fn gate_handler(
 
     let (parts, body) = req.into_parts();
 
-    match proxy_to_ttyd(state, parts, body, rewritten_path).await {
+    match proxy_to_backend(state, parts, body, rewritten_path).await {
         Ok(resp) => resp,
         Err(e) => {
             error!(error = %e, "proxy error");
@@ -127,8 +127,8 @@ pub async fn gate_handler(
     }
 }
 
-/// Rebuild the URI, then send the request to ttyd over its Unix socket.
-async fn proxy_to_ttyd(
+/// Rebuild the URI, then send the request to the backend over its Unix socket.
+async fn proxy_to_backend(
     state: AppState,
     parts: http::request::Parts,
     body: Body,
@@ -157,7 +157,7 @@ async fn proxy_to_ttyd(
         }
         builder = builder.header(name, value);
     }
-    builder = builder.header("Host", "ttyd");
+    builder = builder.header("Host", "m-webshell");
 
     let req = builder.body(hyper_body)?;
 

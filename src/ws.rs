@@ -12,7 +12,7 @@ use tracing::{debug, error, info, warn};
 
 use crate::gate::not_found;
 
-pub async fn bridge_ws_upgrade(req: Request<Body>, ttyd_socket: PathBuf, rewritten_path: String) -> Response {
+pub async fn bridge_ws_upgrade(req: Request<Body>, backend_socket: PathBuf, rewritten_path: String) -> Response {
     let (mut parts, _body) = req.into_parts();
 
     let protocols: Vec<String> = parts.headers
@@ -36,15 +36,15 @@ pub async fn bridge_ws_upgrade(req: Request<Body>, ttyd_socket: PathBuf, rewritt
     info!(path = %rewritten_path, "accepting WebSocket upgrade");
 
     ws.on_upgrade(move |client_ws| async move {
-        bridge(client_ws, ttyd_socket, rewritten_path).await;
+        bridge(client_ws, backend_socket, rewritten_path).await;
     })
 }
 
-async fn bridge(client: WebSocket, ttyd_socket: PathBuf, upstream_path: String) {
-    let stream = match UnixStream::connect(&ttyd_socket).await {
+async fn bridge(client: WebSocket, backend_socket: PathBuf, upstream_path: String) {
+    let stream = match UnixStream::connect(&backend_socket).await {
         Ok(s) => s,
         Err(e) => {
-            error!(error = %e, socket = %ttyd_socket.display(), "failed to connect to ttyd unix socket");
+            error!(error = %e, socket = %backend_socket.display(), "failed to connect to backend unix socket");
             let _ = client.close().await;
             return;
         }
@@ -56,7 +56,7 @@ async fn bridge(client: WebSocket, ttyd_socket: PathBuf, upstream_path: String) 
     let (upstream, _) = match client_async(req, stream).await {
         Ok(pair) => pair,
         Err(e) => {
-            error!(error = %e, "WebSocket handshake with ttyd failed");
+            error!(error = %e, "WebSocket handshake with backend failed");
             let _ = client.close().await;
             return;
         }

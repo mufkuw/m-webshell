@@ -16,13 +16,13 @@ use m_webshell::config::Config;
 use m_webshell::gate::{normalize_path, AppState, UnixConnector};
 use m_webshell::ratelimit::RateLimiter;
 use m_webshell::totp::TotpVerifier;
-use m_webshell::ttyd::spawn_mock_ttyd;
+use m_webshell::backend::spawn_mock_backend;
 
 #[tokio::test]
 async fn http_proxy_rewrites_path() {
     let dir = tempfile::tempdir().unwrap();
     let socket = dir.path().join("ttyd.sock");
-    let _mock = spawn_mock_ttyd(&socket).await.unwrap();
+    let _mock = spawn_mock_backend(&socket).await.unwrap();
 
     tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
 
@@ -72,7 +72,7 @@ async fn http_proxy_rewrites_path() {
 async fn missing_prefix_returns_404() {
     let dir = tempfile::tempdir().unwrap();
     let socket = dir.path().join("ttyd.sock");
-    let _mock = spawn_mock_ttyd(&socket).await.unwrap();
+    let _mock = spawn_mock_backend(&socket).await.unwrap();
     tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
 
     let client: Client<UnixConnector, Full<Bytes>> =
@@ -134,7 +134,7 @@ async fn current_code(secret: &str) -> String {
             .to_bytes()
             .unwrap(),
         None,
-        "ttyd".to_string(),
+        "m-webshell".to_string(),
     )
     .unwrap();
     totp.generate(now)

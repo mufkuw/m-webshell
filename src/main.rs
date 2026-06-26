@@ -12,7 +12,7 @@ use m_webshell::cli::{Cli, Command};
 use m_webshell::config::Config;
 use m_webshell::gate::{AppState, UnixConnector};
 use m_webshell::totp::TotpVerifier;
-use m_webshell::{gate, ratelimit, show_secret, ttyd};
+use m_webshell::{gate, ratelimit, show_secret, backend};
 
 #[tokio::main]
 async fn main() {
@@ -60,12 +60,12 @@ async fn serve(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         client,
     };
 
-    // Spawn ttyd early, but do not fail hard if the binary is unavailable:
+    // Spawn backend early, but do not fail hard if the binary is unavailable:
     // integration tests can bring up their own upstream.
-    let mut ttyd = match ttyd::TtydProcess::spawn(&config).await {
+    let mut backend = match backend::BackendProcess::spawn(&config).await {
         Ok(t) => Some(t),
         Err(e) => {
-            error!(error = %e, "failed to spawn ttyd; continuing without managed child");
+            error!(error = %e, "failed to spawn backend; continuing without managed child");
             None
         }
     };
@@ -89,14 +89,14 @@ async fn serve(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         }
         _ = signal::ctrl_c() => {
             info!("received shutdown signal");
-            if let Some(ref mut t) = &mut ttyd {
-                t.shutdown().await;
+            if let Some(ref mut b) = &mut backend {
+                b.shutdown().await;
             }
         }
     }
 
-    if let Some(t) = ttyd {
-        t.wait().await;
+    if let Some(b) = backend {
+        b.wait().await;
     }
 
     Ok(())

@@ -14,11 +14,11 @@ pub struct Cli {
     #[arg(long, env = "TTG_LISTEN", default_value = "127.0.0.1:12479")]
     pub listen: String,
 
-    /// Unix socket path that ttyd will listen on
+    /// Unix socket path for the backend process
     #[arg(long, env = "TTG_TTYD_SOCKET", default_value = "/run/m-webshell/ttyd.sock")]
     pub ttyd_socket: PathBuf,
 
-    /// Path to the ttyd binary
+    /// Path to the backend binary
     #[arg(long, env = "TTG_TTYD_BIN", default_value = "/usr/local/bin/ttyd")]
     pub ttyd_bin: PathBuf,
 

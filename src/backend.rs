@@ -6,11 +6,11 @@ use tracing::{debug, error, info};
 
 use crate::config::Config;
 
-pub struct TtydProcess {
+pub struct BackendProcess {
     child: Child,
 }
 
-impl TtydProcess {
+impl BackendProcess {
     pub async fn spawn(config: &Config) -> Result<Self, std::io::Error> {
         let uid = config.ttyd_uid.to_string();
 
@@ -33,7 +33,7 @@ impl TtydProcess {
             bin = %config.ttyd_bin.display(),
             socket = %config.ttyd_socket.display(),
             uid = %uid,
-            "spawning ttyd on unix socket"
+            "spawning backend on unix socket"
         );
 
         let child = cmd.spawn()?;
@@ -43,11 +43,11 @@ impl TtydProcess {
     pub async fn wait(mut self) -> Option<i32> {
         match self.child.wait().await {
             Ok(status) => {
-                info!(status = ?status, "ttyd process exited");
+                info!(status = ?status, "backend process exited");
                 status.code()
             }
             Err(e) => {
-                error!(error = %e, "failed to wait for ttyd");
+                error!(error = %e, "failed to wait for backend");
                 None
             }
         }
@@ -55,13 +55,13 @@ impl TtydProcess {
 
     pub async fn shutdown(&mut self) {
         if let Some(id) = self.child.id() {
-            debug!(pid = id, "sending SIGTERM to ttyd");
+            debug!(pid = id, "sending SIGTERM to backend");
             let _ = self.child.start_kill();
         }
     }
 }
 
-pub async fn spawn_mock_ttyd(socket: &Path) -> Result<Child, std::io::Error> {
+pub async fn spawn_mock_backend(socket: &Path) -> Result<Child, std::io::Error> {
     if let Some(parent) = socket.parent() {
         tokio::fs::create_dir_all(parent).await?;
     }

@@ -287,6 +287,7 @@ src/
   ws.rs            # WebSocket upgrade + bidirectional bridge
   totp.rs          # TOTP verification (RFC 6238, strict 30s window)
   ratelimit.rs     # Rate limiter (global token bucket)
+  backend.rs       # Terminal engine child process management
   show_secret.rs   # "show-secret" and "generate-secret" subcommands (QR code)
 tests/
   integration_tests.rs  # HTTP proxy, 404 cases, path normalization

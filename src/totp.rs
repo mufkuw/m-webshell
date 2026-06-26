@@ -30,7 +30,7 @@ impl TotpVerifier {
         })?;
 
         // totp-rs defaults SHA1 block size for RFC6238 test vectors.
-        let totp = TOTP::new(Algorithm::SHA1, 6, 1, 30, secret, None, "ttyd".to_string())
+        let totp = TOTP::new(Algorithm::SHA1, 6, 1, 30, secret, None, "m-webshell".to_string())
             .map_err(|_| TotpError::InvalidSecret)?;
 
         // Sanity: ensure our generate matches the known RFC test vector at t=59.
