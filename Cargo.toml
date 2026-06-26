@@ -3,7 +3,7 @@ name = "m-webshell"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-description = "The keep for your web terminal — time-based one-time password gate for a local ttyd child"
+description = "The keep for your web terminal"
 
 [[bin]]
 name = "m-webshell"
