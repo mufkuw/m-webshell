@@ -2,8 +2,25 @@
 # Post-install script for m-webshell .deb package
 set -e
 
-# Create config directory
+# Install ttyd if not present
+if ! command -v ttyd &>/dev/null; then
+    ARCH=$(uname -m)
+    TTYD_ARCH="$ARCH"
+    case "$ARCH" in
+        x86_64)  TTYD_ARCH="x86_64" ;;
+        aarch64) TTYD_ARCH="aarch64" ;;
+    esac
+    TTYD_URL="https://github.com/tsl0922/ttyd/releases/latest/download/ttyd.${TTYD_ARCH}"
+    echo "  Installing ttyd..."
+    curl -fsSL -o /usr/local/bin/ttyd "$TTYD_URL"
+    chmod 755 /usr/local/bin/ttyd
+    echo "  ttyd installed."
+fi
+
+# Create config and runtime directories
 mkdir -p /etc/m-webshell
+mkdir -p /run/m-webshell
+chmod 0750 /run/m-webshell
 
 # Generate a default TOTP secret if none exists
 if [ ! -f /etc/m-webshell/m-webshell.totp ]; then

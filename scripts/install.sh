@@ -18,10 +18,27 @@ echo ""
 # --- detect arch ---
 ARCH=$(uname -m)
 case "$ARCH" in
-    x86_64)  DEB_ARCH="amd64";  TARGET="x86_64-unknown-linux-gnu" ;;
-    aarch64) DEB_ARCH="arm64";   TARGET="aarch64-unknown-linux-gnu" ;;
+    x86_64)  DEB_ARCH="amd64" ;;
+    aarch64) DEB_ARCH="arm64" ;;
     *) echo "Unsupported architecture: $ARCH"; exit 1 ;;
 esac
+
+# --- install ttyd if not present ---
+if ! command -v ttyd &>/dev/null; then
+    echo "  -> ttyd not found, installing..."
+    TTYD_ARCH="$ARCH"
+    case "$ARCH" in
+        x86_64)  TTYD_ARCH="x86_64" ;;
+        aarch64) TTYD_ARCH="aarch64" ;;
+    esac
+    TTYD_URL="https://github.com/tsl0922/ttyd/releases/latest/download/ttyd.${TTYD_ARCH}"
+    echo "  -> downloading ttyd..."
+    sudo curl -fsSL -o /usr/local/bin/ttyd "$TTYD_URL"
+    sudo chmod 755 /usr/local/bin/ttyd
+    echo "  -> ttyd installed."
+else
+    echo "  -> ttyd already installed."
+fi
 
 # --- find latest release .deb URL ---
 echo "  -> fetching latest release..."
@@ -43,6 +60,16 @@ curl -fsSL -o "$TMPFILE" "$DOWNLOAD_URL"
 
 echo "  -> installing..."
 sudo dpkg -i "$TMPFILE" || sudo apt-get install -f -y
+
+# --- create runtime directory ---
+sudo mkdir -p /run/m-webshell
+sudo chmod 0750 /run/m-webshell
+
+# --- generate TOTP secret if none exists ---
+if [ ! -f /etc/m-webshell/m-webshell.totp ]; then
+    echo "  -> generating TOTP secret..."
+    /usr/local/bin/m-webshell generate-secret
+fi
 
 echo ""
 echo "  m-webshell installed."
