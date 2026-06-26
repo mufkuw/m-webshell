@@ -80,7 +80,7 @@ There are no sessions, no cookies, no tokens, and no state between requests. The
 - **No information leakage** — All failures return bare `404` with zero body. The front-end proxy intercepts these and shows its own generic 404 page. No `401`, no `403`, no error text that hints a terminal exists.
 - **No TOTP in logs** — Paths are normalized to `/system/manage-******` before logging.
 - **Rate limiting** — Global token-bucket limiter (default: 30 requests/minute) prevents brute-force attacks.
-- **Strict 30-second window** — Only the current TOTP step is valid (window = 0). Previous and next steps are rejected.
+- **Strict 30-second validation** — Only the current TOTP step is valid. Previous and next steps are rejected. No clock-skew tolerance.
 - **Unprivileged shell** — the terminal engine drops to a specified UID before spawning `/bin/login`.
 - **No external binaries for auth** — TOTP validation is pure Rust. No shell-out to `oathtool`.
 
@@ -145,7 +145,6 @@ All options can be set via CLI flags or environment variables:
 | `--uid` | `TTG_TTYD_UID` | **required** | UID to drop the login shell to |
 | `--secret-file` | `TTG_SECRET_FILE` | `/etc/m-webshell/m-webshell.totp` | Path to the base32 TOTP secret |
 | `--rate` | `TTG_RATE` | `30/minute` | Rate limit (e.g. `10/second`, `100/hour`) |
-| `--totp-window` | `TTG_TOTP_WINDOW` | `0` | Allowed 30s steps of skew (0 = strict) |
 
 ### systemd service
 
@@ -174,7 +173,6 @@ RuntimeDirectoryMode=0750
 Environment=TTG_LISTEN=127.0.0.1:12479
 Environment=TTG_SECRET_FILE=/etc/m-webshell/m-webshell.totp
 Environment=TTG_RATE=30/minute
-Environment=TTG_TOTP_WINDOW=0
 
 [Install]
 WantedBy=multi-user.target
@@ -299,7 +297,7 @@ tests/
 
 - The TOTP secret file should be `chmod 640` and owned by `root:root`.
 - `m-webshell` binds to `127.0.0.1` by default — it is **not** directly accessible from the network. All traffic must go through a front-end proxy.
-- The `--totp-window` defaults to `0` (strict 30-second validation). Set it to `1` if you have clock skew between your TOTP app and the server (accepts ±30 seconds).
+- TOTP validation is strict 30-second — only the current step is accepted, no skew tolerance.
 - The login shell requires a valid username/password. TOTP is the first factor; the system login is the second.
 - The rate limiter is global (not per-IP). This is intentional — it limits total request volume to the gate.
 

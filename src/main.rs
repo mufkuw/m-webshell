@@ -32,11 +32,11 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     match cli.command_or_default() {
         Command::Serve => serve(cli).await,
         Command::ShowSecret => {
-            show_secret::run_show_secret(&cli.secret_file, cli.totp_window)?;
+            show_secret::run_show_secret(&cli.secret_file)?;
             Ok(())
         }
         Command::GenerateSecret => {
-            show_secret::run_generate_secret(&cli.secret_file, cli.totp_window)?;
+            show_secret::run_generate_secret(&cli.secret_file)?;
             Ok(())
         }
     }
@@ -47,7 +47,7 @@ async fn serve(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
 
     info!(listen = %config.listen, "starting m-webshell");
 
-    let verifier = TotpVerifier::from_secret_file(&config.secret_file, config.totp_window)?;
+    let verifier = TotpVerifier::from_secret_file(&config.secret_file)?;
     let rate_limiter = Arc::new(ratelimit::RateLimiter::new(&config.rate));
 
     let connector = UnixConnector::new(config.ttyd_socket.clone());

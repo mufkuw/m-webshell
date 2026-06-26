@@ -12,7 +12,6 @@ pub struct Config {
     pub ttyd_uid: u32,
     pub secret_file: PathBuf,
     pub rate: String,
-    pub totp_window: u8,
 }
 
 impl Config {
@@ -26,7 +25,6 @@ impl Config {
                 .expect("--ttyd-uid is required (or set TTG_TTYD_UID)"),
             secret_file: cli.secret_file.clone(),
             rate: cli.rate.clone(),
-            totp_window: cli.totp_window,
         }
     }
 }

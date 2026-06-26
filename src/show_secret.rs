@@ -4,14 +4,14 @@ use qrcode::{QrCode, types::Color};
 
 use crate::totp::TotpVerifier;
 
-pub fn run_show_secret(secret_file: &Path, totp_window: u8) -> Result<(), Box<dyn std::error::Error>> {
-    let verifier = TotpVerifier::from_secret_file(secret_file, totp_window)?;
+pub fn run_show_secret(secret_file: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let verifier = TotpVerifier::from_secret_file(secret_file)?;
     let uri = verifier.provisioning_uri("server", "m-webshell");
     print_qr(&uri)?;
     Ok(())
 }
 
-pub fn run_generate_secret(secret_file: &Path, totp_window: u8) -> Result<(), Box<dyn std::error::Error>> {
+pub fn run_generate_secret(secret_file: &Path) -> Result<(), Box<dyn std::error::Error>> {
     if let Some(parent) = secret_file.parent() {
         std::fs::create_dir_all(parent)?;
     }
@@ -25,7 +25,7 @@ pub fn run_generate_secret(secret_file: &Path, totp_window: u8) -> Result<(), Bo
         std::fs::set_permissions(secret_file, std::fs::Permissions::from_mode(0o640))?;
     }
 
-    let verifier = TotpVerifier::from_secret_file(secret_file, totp_window)?;
+    let verifier = TotpVerifier::from_secret_file(secret_file)?;
     let uri = verifier.provisioning_uri("server", "m-webshell");
 
     println!();

@@ -22,7 +22,7 @@ src/
   config.rs        # Resolved runtime config
   gate.rs          # Request handler: TOTP check, path rewrite, HTTP proxy
   ws.rs            # WebSocket upgrade + bidirectional bridge
-  totp.rs          # TOTP verification with skew window
+  totp.rs          # TOTP verification (strict 30s, no skew)
   ratelimit.rs     # Rate limiter (governor, global bucket, per-instance)
   backend.rs       # Backend (terminal engine) child process management
   show_secret.rs   # "show-secret" subcommand (URI + QR)
@@ -36,7 +36,7 @@ tests/
 - **Rate limiter is global, not per-IP.** `check_key` ignores the IP argument and uses a single `governor::NotKeyed` bucket. The `_ip: &IpAddr` parameter is unused.
 - **Unix socket path is communicated via env var.** `gate::UnixConnector` reads `_TTG_TTYD_SOCKET` from the environment (set by `main.rs` at startup from config), not from `AppState`.
 - **Backend CLI arg.** The actual command passes `--interface <socket_path>`. See `src/backend.rs:21-24`.
-- **TOTP window is implemented manually.** `check()` iterates `-window..=window` (30s steps) via `generate()` rather than using `totp-rs`'s built-in `check()` (which only validates the exact current step). A separate `check_at()` method exists only in `#[cfg(test)]`.
+- **TOTP validation is strict (no skew).** `check()` only validates the exact current 30-second step. No window/tolerance.
 - **RFC test vector sanity check runs only in debug builds.** `src/totp.rs:37-39`: at `t=59` with the known secret, `generate(59)` must equal `"287082"`. Silently logged as error if it mismatches (doesn't panic).
 - **Backend spawn failure is non-fatal.** `main.rs:65-69`: if the backend can't start, the server continues running. Integration tests rely on this (they use `mock_ttyd.py` instead).
 - **No CI, no pre-commit config.**

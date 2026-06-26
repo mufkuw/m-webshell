@@ -33,7 +33,7 @@ async fn http_proxy_rewrites_path() {
     let mut file = NamedTempFile::new().unwrap();
     file.write_all(secret.as_bytes()).unwrap();
 
-    let verifier = TotpVerifier::from_secret_file(file.path(), 1).unwrap();
+    let verifier = TotpVerifier::from_secret_file(file.path()).unwrap();
     let state = AppState {
         config: Config {
             listen: "127.0.0.1:0".to_string(),
@@ -42,7 +42,6 @@ async fn http_proxy_rewrites_path() {
             ttyd_uid: 0,
             secret_file: file.path().to_path_buf(),
             rate: "30/minute".to_string(),
-            totp_window: 1,
         },
         verifier,
         rate_limiter: Arc::new(RateLimiter::new("1000/minute")),
@@ -81,7 +80,7 @@ async fn missing_prefix_returns_404() {
     let secret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
     let mut file = NamedTempFile::new().unwrap();
     file.write_all(secret.as_bytes()).unwrap();
-    let verifier = TotpVerifier::from_secret_file(file.path(), 1).unwrap();
+    let verifier = TotpVerifier::from_secret_file(file.path()).unwrap();
     let state = AppState {
         config: Config {
             listen: "127.0.0.1:0".to_string(),
@@ -90,7 +89,6 @@ async fn missing_prefix_returns_404() {
             ttyd_uid: 0,
             secret_file: file.path().to_path_buf(),
             rate: "1000/minute".to_string(),
-            totp_window: 1,
         },
         verifier,
         rate_limiter: Arc::new(RateLimiter::new("1000/minute")),

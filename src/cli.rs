@@ -33,10 +33,6 @@ pub struct Cli {
     /// Per-IP rate limit, e.g. 30/minute
     #[arg(long, env = "TTG_RATE", default_value = "30/minute")]
     pub rate: String,
-
-    /// Allowed 30s steps of TOTP skew
-    #[arg(long, env = "TTG_TOTP_WINDOW", default_value_t = 0)]
-    pub totp_window: u8,
 }
 
 #[derive(Debug, Clone, Subcommand)]

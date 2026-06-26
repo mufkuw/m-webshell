@@ -17,11 +17,10 @@ pub enum TotpError {
 #[derive(Clone)]
 pub struct TotpVerifier {
     totp: TOTP,
-    window: u64,
 }
 
 impl TotpVerifier {
-    pub fn from_secret_file(path: &Path, window: u8) -> Result<Self, TotpError> {
+    pub fn from_secret_file(path: &Path) -> Result<Self, TotpError> {
         let raw = std::fs::read_to_string(path)?;
         let secret_string = raw.trim().replace(' ', "").replace('\n', "");
         let secret = Secret::Encoded(secret_string.clone()).to_bytes().map_err(|_| {
@@ -39,27 +38,16 @@ impl TotpVerifier {
             error!(secret = %secret_string, generated = %totp.generate(59), "TOTP generator does not match RFC test vector");
         }
 
-        Ok(Self {
-            totp,
-            window: window as u64,
-        })
+        Ok(Self { totp })
     }
 
     pub fn check(&self, code: &str) -> bool {
         let Ok(current) = SystemTime::now().duration_since(UNIX_EPOCH) else {
             return false;
         };
-        // totp-rs `check` only validates the exact current step. Use generate to
-        // support a window around the current time.
-        for step in -(self.window as i64)..=self.window as i64 {
-            let ts = (current.as_secs() as i64 + step * 30).max(0) as u64;
-            let generated = self.totp.generate(ts);
-            tracing::trace!(step = %step, generated = %generated, "TOTP generate");
-            if generated == code {
-                return true;
-            }
-        }
-        false
+        // Strict 30-second validation: only the current step is accepted.
+        let generated = self.totp.generate(current.as_secs());
+        generated == code
     }
 
     /// Validate against a specific Unix timestamp (for tests).
@@ -84,7 +72,7 @@ mod tests {
         let secret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
         let mut tmp = tempfile::NamedTempFile::new().unwrap();
         tmp.write_all(secret.as_bytes()).unwrap();
-        let verifier = TotpVerifier::from_secret_file(tmp.path(), 1).unwrap();
+        let verifier = TotpVerifier::from_secret_file(tmp.path()).unwrap();
 
         // At 59 seconds the RFC TOTP value is 287082.
         assert!(verifier.check_at("287082", 59));
