@@ -6,7 +6,7 @@ use std::task::{Context, Poll};
 
 use axum::body::Body;
 use axum::extract::{ConnectInfo, State};
-use axum::http::{Request, StatusCode};
+use axum::http::{Request, StatusCode, HeaderValue};
 use axum::response::{IntoResponse, Response};
 use futures_util::StreamExt;
 use http::Uri;
@@ -78,6 +78,12 @@ pub async fn gate_handler(
     let original_path = req.uri().path().to_string();
     let normalized = normalize_path(&original_path);
 
+    let method = req.method().clone();
+    if method != axum::http::Method::GET && method != axum::http::Method::HEAD && method != axum::http::Method::OPTIONS {
+        warn!(%peer_ip, %method, path = %normalized, "rejected method");
+        return not_found();
+    }
+
     if state.rate_limiter.check_key(&peer_ip).is_err() {
         warn!(%peer_ip, path = %normalized, "rate limit exceeded");
         return not_found();
@@ -102,7 +108,7 @@ pub async fn gate_handler(
     let tail = caps.get(2).map(|m| m.as_str()).unwrap_or("");
     let rewritten_path = if tail.is_empty() { "/" } else { tail };
 
-    info!(%peer_ip, path = %normalized, "proxying to backend");
+    info!(%peer_ip, path = %normalized, "auth succeeded");
 
     let is_ws_upgrade = req.headers().get("upgrade")
         .and_then(|v| v.to_str().ok())
@@ -110,6 +116,7 @@ pub async fn gate_handler(
         .unwrap_or(false);
 
     if is_ws_upgrade {
+        info!(%peer_ip, path = %normalized, "websocket upgrade");
         return crate::ws::bridge_ws_upgrade(req, state.config.ttyd_socket.clone(), rewritten_path.to_string()).await;
     }
 
@@ -169,7 +176,8 @@ pub fn not_found() -> Response {
     StatusCode::NOT_FOUND.into_response()
 }
 
-/// Convert the upstream hyper response into an axum response.
+/// Convert the upstream hyper response into an axum response,
+/// injecting security headers.
 fn transform_response<B>(resp: hyper::Response<B>) -> Response
 where
     B: http_body::Body<Data = Bytes> + Send + 'static,
@@ -189,5 +197,10 @@ where
     let axum_body = axum::body::Body::from_stream(stream);
     let mut response = (status, axum_body).into_response();
     *response.headers_mut() = headers;
+    let hdrs = response.headers_mut();
+    hdrs.insert("X-Frame-Options", HeaderValue::from_static("DENY"));
+    hdrs.insert("X-Content-Type-Options", HeaderValue::from_static("nosniff"));
+    hdrs.insert("X-XSS-Protection", HeaderValue::from_static("1; mode=block"));
+    hdrs.insert("Referrer-Policy", HeaderValue::from_static("no-referrer"));
     response
 }

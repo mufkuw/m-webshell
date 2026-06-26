@@ -1,6 +1,9 @@
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
+
 use thiserror::Error;
 use totp_rs::{Algorithm, Secret, TOTP};
 use tracing::error;
@@ -9,6 +12,8 @@ use tracing::error;
 pub enum TotpError {
     #[error("failed to read secret file: {0}")]
     ReadSecret(#[from] std::io::Error),
+    #[error("secret file is world-readable (fix: chmod 640 {0})")]
+    WorldReadable(std::path::PathBuf),
     #[error("invalid base32 secret")]
     InvalidSecret,
 }
@@ -21,6 +26,11 @@ pub struct TotpVerifier {
 
 impl TotpVerifier {
     pub fn from_secret_file(path: &Path) -> Result<Self, TotpError> {
+        let mode = std::fs::metadata(path)?.permissions().mode();
+        if mode & 0o004 != 0 {
+            return Err(TotpError::WorldReadable(path.to_path_buf()));
+        }
+
         let raw = std::fs::read_to_string(path)?;
         let secret_string = raw.trim().replace(' ', "").replace('\n', "");
         let secret = Secret::Encoded(secret_string.clone()).to_bytes().map_err(|_| {
