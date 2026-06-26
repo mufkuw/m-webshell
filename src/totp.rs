@@ -69,6 +69,10 @@ impl TotpVerifier {
     pub fn provisioning_uri(&self, _account: &str, _issuer: &str) -> String {
         self.totp.get_url()
     }
+
+    pub fn totp_generate(&self, timestamp: u64) -> String {
+        self.totp.generate(timestamp)
+    }
 }
 
 #[cfg(test)]

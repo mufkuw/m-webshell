@@ -2,7 +2,6 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 
-/// Default values are duplicated here and in DESIGN.md. Keep them in sync.
 #[derive(Debug, Clone, Parser)]
 #[command(name = "m-webshell")]
 #[command(about = "The keep for your web terminal")]
@@ -43,6 +42,29 @@ pub enum Command {
     ShowSecret,
     /// Generate a new secret and show its QR code
     GenerateSecret,
+    /// Validate the installation and configuration
+    Check,
+    /// Generate a front-end proxy configuration
+    SetupProxy {
+        /// Which proxy server to configure
+        #[arg(value_enum)]
+        server: ProxyServer,
+
+        /// Domain name for the proxy config
+        #[arg(long)]
+        domain: String,
+
+        /// Port m-webshell listens on
+        #[arg(long, default_value = "12479")]
+        port: u16,
+    },
+}
+
+#[derive(Debug, Clone, clap::ValueEnum)]
+pub enum ProxyServer {
+    Nginx,
+    Caddy,
+    Apache,
 }
 
 impl Cli {

@@ -1,8 +1,10 @@
+pub mod backend;
+pub mod check;
 pub mod cli;
 pub mod config;
 pub mod gate;
 pub mod ratelimit;
+pub mod setup_proxy;
 pub mod show_secret;
 pub mod totp;
-pub mod backend;
 pub mod ws;

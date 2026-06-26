@@ -12,7 +12,7 @@ use m_webshell::cli::{Cli, Command};
 use m_webshell::config::Config;
 use m_webshell::gate::{AppState, UnixConnector};
 use m_webshell::totp::TotpVerifier;
-use m_webshell::{gate, ratelimit, show_secret, backend};
+use m_webshell::{check, gate, ratelimit, setup_proxy, show_secret, backend};
 
 #[tokio::main]
 async fn main() {
@@ -37,6 +37,17 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         }
         Command::GenerateSecret => {
             show_secret::run_generate_secret(&cli.secret_file)?;
+            Ok(())
+        }
+        Command::Check => {
+            let ok = check::run_check(&cli.secret_file, &cli.ttyd_bin, &cli.ttyd_socket, &cli.listen);
+            if !ok {
+                std::process::exit(1);
+            }
+            Ok(())
+        }
+        Command::SetupProxy { server, domain, port } => {
+            setup_proxy::run_setup_proxy(&server, &domain, port);
             Ok(())
         }
     }
