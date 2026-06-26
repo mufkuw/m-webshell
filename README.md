@@ -146,11 +146,13 @@ cp target/release/m-webshell /usr/local/bin/
 
 ### Post-install: scan the QR code
 
+After installation, a secret is generated automatically. To view it:
+
 ```bash
 m-webshell show-secret
 ```
 
-This prints the `otpauth://` provisioning URI and an ANSI QR code in your terminal. Scan it with Google Authenticator, Authy, 1Password, or any TOTP app.
+This prints an ANSI QR code in your terminal. Scan it with Google Authenticator, Authy, 1Password, or any TOTP app.
 
 ### Configuration
 
@@ -223,15 +225,11 @@ See **[EXAMPLES.md](EXAMPLES.md)** for ready-to-use configurations for nginx, Ca
 If you need to rotate the TOTP secret:
 
 ```bash
-# Generate a new secret
-openssl rand -base32 24 | tr -d '=' | tr '/+' '_-' | head -c 32 > /etc/m-webshell/m-webshell.totp
-
-# Restart the daemon
+m-webshell generate-secret
 systemctl restart m-webshell
-
-# Scan the new QR code
-m-webshell show-secret
 ```
+
+This generates a new secret, saves it, and prints a fresh QR code to scan.
 
 ---
 
@@ -315,7 +313,7 @@ src/
   totp.rs          # TOTP verification (RFC 6238, strict 30s window)
   ratelimit.rs     # Rate limiter (governor, global token bucket)
   ttyd.rs          # ttyd child process management
-  show_secret.rs   # "show-secret" subcommand (prints URI + ANSI QR)
+  show_secret.rs   # "show-secret" and "generate-secret" subcommands (QR code)
 tests/
   integration_tests.rs  # HTTP proxy, 404 cases, path normalization
   mock_ttyd.py          # Python mock upstream for integration tests

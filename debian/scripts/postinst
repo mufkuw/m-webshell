@@ -7,10 +7,9 @@ mkdir -p /etc/m-webshell
 
 # Generate a default TOTP secret if none exists
 if [ ! -f /etc/m-webshell/m-webshell.totp ]; then
-    openssl rand -base32 24 | tr -d '=' | tr '/+' '_-' | head -c 32 > /etc/m-webshell/m-webshell.totp
-    chmod 640 /etc/m-webshell/m-webshell.totp
+    /usr/local/bin/m-webshell generate-secret
     echo ""
-    echo "  m-webshell: generated new TOTP secret at /etc/m-webshell/m-webshell.totp"
+    echo "  m-webshell: generated new TOTP secret."
     echo "  Run 'm-webshell show-secret' to scan the QR code."
     echo ""
 fi

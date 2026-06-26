@@ -35,6 +35,10 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
             show_secret::run_show_secret(&cli.secret_file, cli.totp_window)?;
             Ok(())
         }
+        Command::GenerateSecret => {
+            show_secret::run_generate_secret(&cli.secret_file, cli.totp_window)?;
+            Ok(())
+        }
     }
 }
 

@@ -43,8 +43,10 @@ pub struct Cli {
 pub enum Command {
     /// Run the gate daemon (default)
     Serve,
-    /// Print the provisioning URI and QR code for the secret
+    /// Show the QR code for the existing secret
     ShowSecret,
+    /// Generate a new secret and show its QR code
+    GenerateSecret,
 }
 
 impl Cli {
