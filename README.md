@@ -35,6 +35,7 @@ What you actually want: **type a 6-digit code into the URL bar, get a terminal f
 3. **Strips the TOTP prefix** and proxies the rest to the terminal engine over the Unix socket.
 4. **Returns a bare `404`** (no body, no text) for any invalid, expired, or missing code — indistinguishable from a page that doesn't exist.
 5. **Rate-limits** all requests to prevent brute-force guessing.
+6. **Supports file transfer** — upload and download files directly in the browser terminal.
 
 There are no sessions, no cookies, no tokens, and no state between requests. The TOTP code is checked fresh on every HTTP request and every WebSocket upgrade. When the 30-second window expires, the terminal stops working immediately.
 
@@ -145,6 +146,8 @@ All options can be set via CLI flags or environment variables:
 | `--uid` | `TTG_TTYD_UID` | **required** | UID to drop the login shell to |
 | `--secret-file` | `TTG_SECRET_FILE` | `/etc/m-webshell/m-webshell.totp` | Path to the base32 TOTP secret |
 | `--rate` | `TTG_RATE` | `30/minute` | Rate limit (e.g. `10/second`, `100/hour`) |
+| `--title` | `TTG_TITLE` | `m-webshell` | Browser page title for the terminal |
+| `--font-size` | `TTG_FONT_SIZE` | `16` | Terminal font size in pixels |
 
 ### systemd service
 
@@ -158,13 +161,13 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/m-webshell serve --ttyd-uid 1000
+ExecStart=/usr/local/bin/m-webshell --ttyd-uid 1000 serve
 Restart=always
 RestartSec=5
 User=root
 ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/run/m-webshell
+ProtectHome=no
+ReadWritePaths=/run/m-webshell /home
 PrivateTmp=true
 StateDirectory=m-webshell
 RuntimeDirectory=m-webshell
@@ -173,6 +176,8 @@ RuntimeDirectoryMode=0750
 Environment=TTG_LISTEN=127.0.0.1:12479
 Environment=TTG_SECRET_FILE=/etc/m-webshell/m-webshell.totp
 Environment=TTG_RATE=30/minute
+Environment=TTG_TITLE=m-webshell
+Environment=TTG_FONT_SIZE=16
 
 [Install]
 WantedBy=multi-user.target
@@ -194,6 +199,15 @@ See **[EXAMPLES.md](EXAMPLES.md)** for ready-to-use configurations for nginx, Ca
 4. The code expires in 30 seconds. After that, any further requests (page loads, WebSocket, assets) return `404`.
 
 **That's it.** No login page, no cookie, no session. Type the code in the URL, use the terminal, done.
+
+### File transfer
+
+You can upload and download files directly in the browser terminal:
+
+- **Download**: Type `sz filename` in the terminal — the browser will save the file.
+- **Upload**: Drag and drop files into the browser window, or use the upload button in the terminal toolbar.
+
+Requires `lrzsz` installed on the server (`apt install lrzsz`).
 
 ### Regenerating the secret
 

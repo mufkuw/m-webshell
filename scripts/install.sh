@@ -46,6 +46,14 @@ else
     echo "  -> ttyd already installed."
 fi
 
+# --- install lrzsz for file transfer ---
+if ! command -v rz &>/dev/null; then
+    echo "  -> installing lrzsz (file transfer support)..."
+    sudo apt-get install -y lrzsz 2>/dev/null || echo "  -> lrzsz not available, file transfer may not work"
+else
+    echo "  -> lrzsz already installed."
+fi
+
 # --- find latest release .deb URL ---
 echo "  -> fetching latest release..."
 DOWNLOAD_URL=$(curl -fsSL "$GITHUB_API" | grep -o '"browser_download_url": *"[^"]*'"$DEB_ARCH"'.deb"' | sed 's/.*"browser_download_url": *"\([^"]*\)".*/\1/' | head -1)
