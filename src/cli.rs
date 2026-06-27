@@ -42,7 +42,7 @@ pub struct Cli {
     pub rate: String,
 
     /// Browser page title for the terminal
-    #[arg(long, env = "TTG_TITLE", default_value = "Terminal")]
+    #[arg(long, env = "TTG_TITLE", default_value = "m-webshell")]
     pub title: String,
 
     /// Terminal font size in pixels

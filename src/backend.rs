@@ -27,10 +27,10 @@ impl BackendProcess {
             .arg("1")
             .arg("-u")
             .arg(&uid)
-            .arg("-T")
-            .arg(&config.title)
             .arg("-t")
             .arg(format!("fontSize={}", font_size))
+            .arg("-t")
+            .arg(format!("title={}", &config.title))
             .arg("/bin/login")
             .kill_on_drop(true);
 
