@@ -32,6 +32,8 @@ impl BackendProcess {
             .arg(format!("fontSize={}", font_size))
             .arg("-t")
             .arg(&title_fixed)
+            .arg("-t")
+            .arg("enableTrzsz=true")
             .arg("/bin/login")
             .kill_on_drop(true);
 
