@@ -19,6 +19,7 @@ impl BackendProcess {
         }
 
         let font_size = config.font_size.to_string();
+        let title_fixed = format!("titleFixed={}", &config.title);
         let mut cmd = Command::new(&config.ttyd_bin);
         cmd.arg("-i")
             .arg(config.ttyd_socket.as_os_str())
@@ -30,7 +31,7 @@ impl BackendProcess {
             .arg("-t")
             .arg(format!("fontSize={}", font_size))
             .arg("-t")
-            .arg(format!("title={}", &config.title))
+            .arg(&title_fixed)
             .arg("/bin/login")
             .kill_on_drop(true);
 
