@@ -40,17 +40,18 @@ pub async fn bridge_ws_upgrade(
     };
 
     if !protocols.is_empty() {
-        ws = ws.protocols(protocols.into_iter().map(std::borrow::Cow::Owned));
+        ws = ws.protocols(protocols.clone().into_iter().map(std::borrow::Cow::Owned));
     }
 
     info!(path = %rewritten_path, "accepting WebSocket upgrade");
 
+    let client_protocols = protocols.clone();
     ws.on_upgrade(move |client_ws| async move {
-        bridge(client_ws, backend_socket, rewritten_path).await;
+        bridge(client_ws, backend_socket, rewritten_path, client_protocols).await;
     })
 }
 
-async fn bridge(client: WebSocket, backend_socket: PathBuf, upstream_path: String) {
+async fn bridge(client: WebSocket, backend_socket: PathBuf, upstream_path: String, client_protocols: Vec<String>) {
     let stream = match UnixStream::connect(&backend_socket).await {
         Ok(s) => s,
         Err(e) => {
@@ -62,8 +63,14 @@ async fn bridge(client: WebSocket, backend_socket: PathBuf, upstream_path: Strin
 
     let ws_url = format!("ws://localhost{}", upstream_path);
     let mut req = ws_url.into_client_request().unwrap();
+    let upstream_protocols = client_protocols
+        .iter()
+        .chain(std::iter::once(&"tty".to_string()))
+        .cloned()
+        .collect::<Vec<_>>()
+        .join(", ");
     req.headers_mut()
-        .insert("Sec-WebSocket-Protocol", HeaderValue::from_static("tty"));
+        .insert("Sec-WebSocket-Protocol", HeaderValue::from_str(&upstream_protocols).unwrap_or(HeaderValue::from_static("tty")));
     let (upstream, _) = match client_async(req, stream).await {
         Ok(pair) => pair,
         Err(e) => {
