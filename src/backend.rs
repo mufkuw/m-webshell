@@ -33,6 +33,8 @@ impl BackendProcess {
             .arg("-t")
             .arg(&title_fixed)
             .arg("-t")
+            .arg("enableZmodem=true")
+            .arg("-t")
             .arg("enableTrzsz=true")
             .arg("/bin/login")
             .kill_on_drop(true);
