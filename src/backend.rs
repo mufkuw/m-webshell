@@ -18,6 +18,7 @@ impl BackendProcess {
             tokio::fs::create_dir_all(parent).await?;
         }
 
+        let font_size = config.font_size.to_string();
         let mut cmd = Command::new(&config.ttyd_bin);
         cmd.arg("-i")
             .arg(config.ttyd_socket.as_os_str())
@@ -26,6 +27,10 @@ impl BackendProcess {
             .arg("1")
             .arg("-u")
             .arg(&uid)
+            .arg("-T")
+            .arg(&config.title)
+            .arg("-t")
+            .arg(format!("fontSize={}", font_size))
             .arg("/bin/login")
             .kill_on_drop(true);
 

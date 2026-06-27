@@ -40,6 +40,14 @@ pub struct Cli {
     /// Per-IP rate limit, e.g. 30/minute
     #[arg(long, env = "TTG_RATE", default_value = "30/minute")]
     pub rate: String,
+
+    /// Browser page title for the terminal
+    #[arg(long, env = "TTG_TITLE", default_value = "Terminal")]
+    pub title: String,
+
+    /// Terminal font size in pixels
+    #[arg(long, env = "TTG_FONT_SIZE", default_value_t = 16)]
+    pub font_size: u16,
 }
 
 #[derive(Debug, Clone, Subcommand)]

@@ -26,6 +26,8 @@ Environment=TTG_TTYD_SOCKET=/run/m-webshell/ttyd.sock
 Environment=TTG_TTYD_BIN=/usr/local/bin/ttyd
 Environment=TTG_SECRET_FILE=/etc/m-webshell/m-webshell.totp
 Environment=TTG_RATE=30/minute
+Environment=TTG_TITLE=Terminal
+Environment=TTG_FONT_SIZE=16
 
 [Install]
 WantedBy=multi-user.target
