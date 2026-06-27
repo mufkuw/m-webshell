@@ -19,7 +19,10 @@ impl RateLimiter {
         Self { limiter }
     }
 
-    pub fn check_key(&self, _ip: &IpAddr) -> Result<(), governor::NotUntil<<DefaultClock as Clock>::Instant>> {
+    pub fn check_key(
+        &self,
+        _ip: &IpAddr,
+    ) -> Result<(), governor::NotUntil<<DefaultClock as Clock>::Instant>> {
         self.limiter.check()
     }
 }

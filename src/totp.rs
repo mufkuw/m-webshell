@@ -32,15 +32,25 @@ impl TotpVerifier {
         }
 
         let raw = std::fs::read_to_string(path)?;
-        let secret_string = raw.trim().replace(' ', "").replace('\n', "");
-        let secret = Secret::Encoded(secret_string.clone()).to_bytes().map_err(|_| {
-            error!(path = %path.display(), "secret file contains invalid base32");
-            TotpError::InvalidSecret
-        })?;
+        let secret_string = raw.trim().replace([' ', '\n'], "");
+        let secret = Secret::Encoded(secret_string.clone())
+            .to_bytes()
+            .map_err(|_| {
+                error!(path = %path.display(), "secret file contains invalid base32");
+                TotpError::InvalidSecret
+            })?;
 
         // totp-rs defaults SHA1 block size for RFC6238 test vectors.
-        let totp = TOTP::new(Algorithm::SHA1, 6, 1, 30, secret, None, "m-webshell".to_string())
-            .map_err(|_| TotpError::InvalidSecret)?;
+        let totp = TOTP::new(
+            Algorithm::SHA1,
+            6,
+            1,
+            30,
+            secret,
+            None,
+            "m-webshell".to_string(),
+        )
+        .map_err(|_| TotpError::InvalidSecret)?;
 
         // Sanity: ensure our generate matches the known RFC test vector at t=59.
         #[cfg(debug_assertions)]

@@ -12,11 +12,11 @@ use hyper_util::client::legacy::Client;
 use hyper_util::rt::TokioExecutor;
 use tempfile::NamedTempFile;
 
+use m_webshell::backend::spawn_mock_backend;
 use m_webshell::config::Config;
 use m_webshell::gate::{normalize_path, AppState, UnixConnector};
 use m_webshell::ratelimit::RateLimiter;
 use m_webshell::totp::TotpVerifier;
-use m_webshell::backend::spawn_mock_backend;
 
 #[tokio::test]
 async fn http_proxy_rewrites_path() {
@@ -115,7 +115,10 @@ fn normalize_path_masks_totp() {
         normalize_path("/system/manage-123456/token?x=1"),
         "/system/manage-******/token?x=1"
     );
-    assert_eq!(normalize_path("/system/manage-123456"), "/system/manage-******");
+    assert_eq!(
+        normalize_path("/system/manage-123456"),
+        "/system/manage-******"
+    );
 }
 
 async fn current_code(secret: &str) -> String {

@@ -8,11 +8,15 @@ pub fn run_setup_proxy(server: &ProxyServer, domain: &str, port: u16) {
     };
 
     println!();
-    println!("  m-webshell proxy configuration for {} ({})", match server {
-        ProxyServer::Nginx => "nginx",
-        ProxyServer::Caddy => "Caddy",
-        ProxyServer::Apache => "Apache",
-    }, domain);
+    println!(
+        "  m-webshell proxy configuration for {} ({})",
+        match server {
+            ProxyServer::Nginx => "nginx",
+            ProxyServer::Caddy => "Caddy",
+            ProxyServer::Apache => "Apache",
+        },
+        domain
+    );
     println!();
     println!("{}\n", config);
 
@@ -44,7 +48,8 @@ pub fn run_setup_proxy(server: &ProxyServer, domain: &str, port: u16) {
 }
 
 fn nginx_config(domain: &str, port: u16) -> String {
-    format!(r#"server {{
+    format!(
+        r#"server {{
     listen 80;
     listen [::]:80;
     server_name {domain};
@@ -85,11 +90,13 @@ fn nginx_config(domain: &str, port: u16) -> String {
         # ... your app config ...
         proxy_pass http://127.0.0.1:8000;
     }}
-}}"#)
+}}"#
+    )
 }
 
 fn caddy_config(domain: &str, port: u16) -> String {
-    format!(r#"{domain} {{
+    format!(
+        r#"{domain} {{
     # m-webshell — TOTP-gated web terminal
     @mwebshell path /system/manage-*
     handle @mwebshell {{
@@ -105,11 +112,13 @@ fn caddy_config(domain: &str, port: u16) -> String {
     handle {{
         reverse_proxy 127.0.0.1:8000
     }}
-}}"#)
+}}"#
+    )
 }
 
 fn apache_config(domain: &str, port: u16) -> String {
-    format!(r#"<VirtualHost *:80>
+    format!(
+        r#"<VirtualHost *:80>
     ServerName {domain}
 
     # m-webshell — TOTP-gated web terminal
@@ -136,5 +145,6 @@ fn apache_config(domain: &str, port: u16) -> String {
         ProxyPass "http://127.0.0.1:8000/"
         ProxyPassReverse "http://127.0.0.1:8000/"
     </Location>
-</VirtualHost>"#)
+</VirtualHost>"#
+    )
 }

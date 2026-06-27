@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use qrcode::{QrCode, types::Color};
+use qrcode::{types::Color, QrCode};
 
 use crate::totp::TotpVerifier;
 
@@ -92,13 +92,15 @@ fn generate_base32_secret() -> String {
         .map(|d| d.as_nanos())
         .unwrap_or(0);
 
-    for i in 0..20 {
-        bytes[i] = ((seed >> (i % 8)) & 0xFF) as u8 ^ (i as u8).wrapping_mul(37);
+    for (i, b) in bytes.iter_mut().enumerate() {
+        *b = ((seed >> (i % 8)) & 0xFF) as u8 ^ (i as u8).wrapping_mul(37);
     }
 
     let mut seed_state = seed as u64;
     for b in bytes.iter_mut() {
-        seed_state = seed_state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        seed_state = seed_state
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
         *b = (seed_state >> 33) as u8;
     }
 

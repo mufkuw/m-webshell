@@ -6,7 +6,7 @@ use std::task::{Context, Poll};
 
 use axum::body::Body;
 use axum::extract::{ConnectInfo, State};
-use axum::http::{Request, StatusCode, HeaderValue};
+use axum::http::{HeaderValue, Request, StatusCode};
 use axum::response::{IntoResponse, Response};
 use futures_util::StreamExt;
 use http::Uri;
@@ -79,7 +79,10 @@ pub async fn gate_handler(
     let normalized = normalize_path(&original_path);
 
     let method = req.method().clone();
-    if method != axum::http::Method::GET && method != axum::http::Method::HEAD && method != axum::http::Method::OPTIONS {
+    if method != axum::http::Method::GET
+        && method != axum::http::Method::HEAD
+        && method != axum::http::Method::OPTIONS
+    {
         warn!(%peer_ip, %method, path = %normalized, "rejected method");
         return not_found();
     }
@@ -110,14 +113,21 @@ pub async fn gate_handler(
 
     info!(%peer_ip, path = %normalized, "auth succeeded");
 
-    let is_ws_upgrade = req.headers().get("upgrade")
+    let is_ws_upgrade = req
+        .headers()
+        .get("upgrade")
         .and_then(|v| v.to_str().ok())
         .map(|v| v.eq_ignore_ascii_case("websocket"))
         .unwrap_or(false);
 
     if is_ws_upgrade {
         info!(%peer_ip, path = %normalized, "websocket upgrade");
-        return crate::ws::bridge_ws_upgrade(req, state.config.ttyd_socket.clone(), rewritten_path.to_string()).await;
+        return crate::ws::bridge_ws_upgrade(
+            req,
+            state.config.ttyd_socket.clone(),
+            rewritten_path.to_string(),
+        )
+        .await;
     }
 
     let (parts, body) = req.into_parts();
@@ -126,10 +136,7 @@ pub async fn gate_handler(
         Ok(resp) => resp,
         Err(e) => {
             error!(error = %e, "proxy error");
-            (
-                StatusCode::SERVICE_UNAVAILABLE,
-            )
-                .into_response()
+            (StatusCode::SERVICE_UNAVAILABLE,).into_response()
         }
     }
 }
@@ -141,14 +148,17 @@ async fn proxy_to_backend(
     body: Body,
     new_path: &str,
 ) -> Result<Response, Box<dyn std::error::Error + Send + Sync>> {
-    let query = parts.uri.query().map(|q| format!("?{}", q)).unwrap_or_default();
-    let uri = format!("http://localhost{}{}", new_path, query)
-        .parse::<Uri>()?;
+    let query = parts
+        .uri
+        .query()
+        .map(|q| format!("?{}", q))
+        .unwrap_or_default();
+    let uri = format!("http://localhost{}{}", new_path, query).parse::<Uri>()?;
 
     let mut buf = Vec::new();
     let mut stream = body.into_data_stream();
     while let Some(item) = stream.next().await {
-        let chunk = item.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+        let chunk = item.map_err(|e| std::io::Error::other(e.to_string()))?;
         buf.extend_from_slice(&chunk);
     }
     let hyper_body = http_body_util::Full::new(Bytes::from(buf));
@@ -186,21 +196,24 @@ where
     let (parts, body) = resp.into_parts();
     let status = parts.status;
     let headers = parts.headers;
-    let stream = http_body_util::BodyStream::new(body)
-        .map(|frame| {
-            let frame = frame.map_err(|e| {
-                std::io::Error::new(std::io::ErrorKind::Other, e.to_string())
-            })?;
-            let data = frame.into_data().unwrap_or_default();
-            Ok::<_, std::io::Error>(data)
-        });
+    let stream = http_body_util::BodyStream::new(body).map(|frame| {
+        let frame = frame.map_err(|e| std::io::Error::other(e.to_string()))?;
+        let data = frame.into_data().unwrap_or_default();
+        Ok::<_, std::io::Error>(data)
+    });
     let axum_body = axum::body::Body::from_stream(stream);
     let mut response = (status, axum_body).into_response();
     *response.headers_mut() = headers;
     let hdrs = response.headers_mut();
     hdrs.insert("X-Frame-Options", HeaderValue::from_static("DENY"));
-    hdrs.insert("X-Content-Type-Options", HeaderValue::from_static("nosniff"));
-    hdrs.insert("X-XSS-Protection", HeaderValue::from_static("1; mode=block"));
+    hdrs.insert(
+        "X-Content-Type-Options",
+        HeaderValue::from_static("nosniff"),
+    );
+    hdrs.insert(
+        "X-XSS-Protection",
+        HeaderValue::from_static("1; mode=block"),
+    );
     hdrs.insert("Referrer-Policy", HeaderValue::from_static("no-referrer"));
     response
 }

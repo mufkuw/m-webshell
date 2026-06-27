@@ -1,21 +1,31 @@
 use std::path::PathBuf;
 
 use axum::body::Body;
-use axum::extract::ws::{CloseFrame as AxumCloseFrame, Message as AxumMessage, WebSocket, WebSocketUpgrade};
+use axum::extract::ws::{
+    CloseFrame as AxumCloseFrame, Message as AxumMessage, WebSocket, WebSocketUpgrade,
+};
 use axum::extract::FromRequestParts;
 use axum::http::{HeaderValue, Request};
 use axum::response::Response;
 use futures_util::{SinkExt, StreamExt};
 use tokio::net::UnixStream;
-use tokio_tungstenite::{client_async, tungstenite::client::IntoClientRequest, tungstenite::protocol::CloseFrame as TungCloseFrame, tungstenite::Message as TungMessage};
+use tokio_tungstenite::{
+    client_async, tungstenite::client::IntoClientRequest,
+    tungstenite::protocol::CloseFrame as TungCloseFrame, tungstenite::Message as TungMessage,
+};
 use tracing::{debug, error, info, warn};
 
 use crate::gate::not_found;
 
-pub async fn bridge_ws_upgrade(req: Request<Body>, backend_socket: PathBuf, rewritten_path: String) -> Response {
+pub async fn bridge_ws_upgrade(
+    req: Request<Body>,
+    backend_socket: PathBuf,
+    rewritten_path: String,
+) -> Response {
     let (mut parts, _body) = req.into_parts();
 
-    let protocols: Vec<String> = parts.headers
+    let protocols: Vec<String> = parts
+        .headers
         .get("sec-websocket-protocol")
         .and_then(|v| v.to_str().ok())
         .map(|s| s.split(',').map(|p| p.trim().to_string()).collect())
@@ -52,7 +62,8 @@ async fn bridge(client: WebSocket, backend_socket: PathBuf, upstream_path: Strin
 
     let ws_url = format!("ws://localhost{}", upstream_path);
     let mut req = ws_url.into_client_request().unwrap();
-    req.headers_mut().insert("Sec-WebSocket-Protocol", HeaderValue::from_static("tty"));
+    req.headers_mut()
+        .insert("Sec-WebSocket-Protocol", HeaderValue::from_static("tty"));
     let (upstream, _) = match client_async(req, stream).await {
         Ok(pair) => pair,
         Err(e) => {

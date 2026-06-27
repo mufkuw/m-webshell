@@ -55,7 +55,11 @@ pub fn run_check(secret_file: &Path, ttyd_bin: &Path, ttyd_socket: &Path, listen
                     .map(|d| d.as_secs())
                     .unwrap_or(0);
                 let code = verifier.totp_generate(now);
-                println!("    Current TOTP code: {}  (expires in ~{}s)", code, 30 - (now % 30));
+                println!(
+                    "    Current TOTP code: {}  (expires in ~{}s)",
+                    code,
+                    30 - (now % 30)
+                );
             }
             Err(e) => {
                 fail(&format!("secret file error: {}", e));
@@ -90,11 +94,21 @@ pub fn run_check(secret_file: &Path, ttyd_bin: &Path, ttyd_socket: &Path, listen
     // 3. Runtime directory
     let socket_dir = ttyd_socket.parent().unwrap_or(Path::new("/run/m-webshell"));
     if !socket_dir.exists() {
-        fail(&format!("runtime directory does not exist: {}", socket_dir.display()));
-        println!("    Fix: sudo mkdir -p {} && sudo chmod 0750 {}", socket_dir.display(), socket_dir.display());
+        fail(&format!(
+            "runtime directory does not exist: {}",
+            socket_dir.display()
+        ));
+        println!(
+            "    Fix: sudo mkdir -p {} && sudo chmod 0750 {}",
+            socket_dir.display(),
+            socket_dir.display()
+        );
         ok = false;
     } else {
-        pass(&format!("runtime directory exists: {}", socket_dir.display()));
+        pass(&format!(
+            "runtime directory exists: {}",
+            socket_dir.display()
+        ));
     }
 
     // 4. Port availability
@@ -103,7 +117,10 @@ pub fn run_check(secret_file: &Path, ttyd_bin: &Path, ttyd_socket: &Path, listen
         match std::net::TcpListener::bind(addr) {
             Ok(_) => pass(&format!("port {} is available", addr.port())),
             Err(e) if e.kind() == std::io::ErrorKind::AddrInUse => {
-                warn(&format!("port {} is already in use (m-webshell may be running)", addr.port()));
+                warn(&format!(
+                    "port {} is already in use (m-webshell may be running)",
+                    addr.port()
+                ));
             }
             Err(_) => {
                 fail(&format!("cannot bind to {}", addr));

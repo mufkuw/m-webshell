@@ -14,7 +14,11 @@ pub struct Cli {
     pub listen: String,
 
     /// Unix socket path for the backend process
-    #[arg(long, env = "TTG_TTYD_SOCKET", default_value = "/run/m-webshell/ttyd.sock")]
+    #[arg(
+        long,
+        env = "TTG_TTYD_SOCKET",
+        default_value = "/run/m-webshell/ttyd.sock"
+    )]
     pub ttyd_socket: PathBuf,
 
     /// Path to the backend binary
@@ -26,7 +30,11 @@ pub struct Cli {
     pub ttyd_uid: Option<u32>,
 
     /// File containing the base32-encoded TOTP secret
-    #[arg(long, env = "TTG_SECRET_FILE", default_value = "/etc/m-webshell/m-webshell.totp")]
+    #[arg(
+        long,
+        env = "TTG_SECRET_FILE",
+        default_value = "/etc/m-webshell/m-webshell.totp"
+    )]
     pub secret_file: PathBuf,
 
     /// Per-IP rate limit, e.g. 30/minute
