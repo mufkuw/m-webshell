@@ -51,7 +51,12 @@ pub async fn bridge_ws_upgrade(
     })
 }
 
-async fn bridge(client: WebSocket, backend_socket: PathBuf, upstream_path: String, client_protocols: Vec<String>) {
+async fn bridge(
+    client: WebSocket,
+    backend_socket: PathBuf,
+    upstream_path: String,
+    client_protocols: Vec<String>,
+) {
     let stream = match UnixStream::connect(&backend_socket).await {
         Ok(s) => s,
         Err(e) => {
@@ -69,8 +74,10 @@ async fn bridge(client: WebSocket, backend_socket: PathBuf, upstream_path: Strin
         .cloned()
         .collect::<Vec<_>>()
         .join(", ");
-    req.headers_mut()
-        .insert("Sec-WebSocket-Protocol", HeaderValue::from_str(&upstream_protocols).unwrap_or(HeaderValue::from_static("tty")));
+    req.headers_mut().insert(
+        "Sec-WebSocket-Protocol",
+        HeaderValue::from_str(&upstream_protocols).unwrap_or(HeaderValue::from_static("tty")),
+    );
     let (upstream, _) = match client_async(req, stream).await {
         Ok(pair) => pair,
         Err(e) => {
