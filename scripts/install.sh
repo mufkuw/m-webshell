@@ -42,7 +42,7 @@ fi
 
 # --- find latest release .deb URL ---
 echo "  -> fetching latest release..."
-DOWNLOAD_URL=$(curl -fsSL "$GITHUB_API" | grep -o "browser_download_url.*${DEB_ARCH}.deb" | head -1 | cut -d'"' -f2)
+DOWNLOAD_URL=$(curl -fsSL "$GITHUB_API" | grep -o '"browser_download_url": *"[^"]*'"$DEB_ARCH"'.deb"' | sed 's/.*"browser_download_url": *"\([^"]*\)".*/\1/' | head -1)
 
 if [ -z "$DOWNLOAD_URL" ]; then
     echo "  No .deb package found for ${DEB_ARCH}."
