@@ -82,6 +82,7 @@ pub async fn gate_handler(
     if method != axum::http::Method::GET
         && method != axum::http::Method::HEAD
         && method != axum::http::Method::OPTIONS
+        && method != axum::http::Method::POST
     {
         warn!(%peer_ip, %method, path = %normalized, "rejected method");
         return not_found();
