@@ -204,8 +204,8 @@ See **[EXAMPLES.md](EXAMPLES.md)** for ready-to-use configurations for nginx, Ca
 
 You can upload and download files directly in the browser terminal:
 
-- **Download**: Type `sz filename` in the terminal — the browser will save the file.
-- **Upload**: Drag and drop files into the browser window, or use the upload button in the terminal toolbar.
+- **Download a file from the server**: Type `sz filename` in the terminal — the browser will save the file.
+- **Upload a file to the server**: Type `rz` in the terminal, then select the file from your browser's file picker.
 
 Requires `lrzsz` installed on the server (`apt install lrzsz`).
 
