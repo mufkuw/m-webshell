@@ -3,3 +3,5 @@
 .playwright-mcp/
 *.png
 *.yml
+!.github/workflows/*.ymlfinal-snapshot.yml
+invalid-totp-snapshot.yml

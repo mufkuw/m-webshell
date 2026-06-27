@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            deb_arch: amd64
+          - target: aarch64-unknown-linux-gnu
+            deb_arch: arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 gcc-aarch64-linux-gnu
+
+      - name: Install ttyd
+        run: |
+          if [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then
+            wget -q https://github.com/tsl0922/ttyd/releases/latest/download/ttyd.aarch64 -O /usr/local/bin/ttyd
+          else
+            wget -q https://github.com/tsl0922/ttyd/releases/latest/download/ttyd.x86_64 -O /usr/local/bin/ttyd
+          fi
+          chmod +x /usr/local/bin/ttyd
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cargo-deb
+        run: cargo install cargo-deb
+
+      - name: Build .deb package
+        run: cargo deb --target ${{ matrix.target }}
+
+      - name: Build binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Upload .deb to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: target/${{ matrix.target }}/debian/*.deb
+
+      - name: Upload binary
+        uses: softprops/action-gh-release@v2
+        with:
+          files: target/${{ matrix.target }}/release/m-webshell
