@@ -6,7 +6,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/m-webshell serve --ttyd-uid 1000
+ExecStart=/usr/local/bin/m-webshell --ttyd-uid 1000 serve
 Restart=always
 RestartSec=5
 User=root
