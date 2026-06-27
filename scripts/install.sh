@@ -23,6 +23,12 @@ case "$ARCH" in
     *) echo "Unsupported architecture: $ARCH"; exit 1 ;;
 esac
 
+# --- stop existing service if running ---
+if systemctl is-active m-webshell &>/dev/null; then
+    echo "  -> stopping m-webshell service..."
+    sudo systemctl stop m-webshell
+fi
+
 # --- install ttyd if not present ---
 if ! command -v ttyd &>/dev/null; then
     echo "  -> ttyd not found, installing..."
@@ -59,7 +65,7 @@ echo "  -> downloading ${DEB_ARCH} package..."
 curl -fsSL -o "$TMPFILE" "$DOWNLOAD_URL"
 
 echo "  -> installing..."
-sudo dpkg -i "$TMPFILE" || sudo apt-get install -f -y
+sudo dpkg -i "$TMPFILE" 2>/dev/null || sudo apt-get install -f -y
 
 # --- create runtime directory ---
 sudo mkdir -p /run/m-webshell
@@ -71,17 +77,26 @@ if [ ! -f /etc/m-webshell/m-webshell.totp ]; then
     /usr/local/bin/m-webshell generate-secret
 fi
 
+# --- start or restart service ---
+if [ -f /etc/systemd/system/m-webshell.service ]; then
+    sudo systemctl daemon-reload
+    sudo systemctl start m-webshell
+    echo ""
+    echo "  m-webshell upgraded and started."
+else
+    echo ""
+    echo "  m-webshell installed."
+    echo ""
+    echo "  Next steps:"
+    echo "    1. Edit the UID in the service file:"
+    echo "       sudo nano /etc/systemd/system/m-webshell.service"
+    echo "    2. Enable and start the service:"
+    echo "       sudo systemctl daemon-reload"
+    echo "       sudo systemctl enable --now m-webshell"
+    echo "    3. Scan the QR code:"
+    echo "       m-webshell show-secret"
+fi
+
 echo ""
-echo "  m-webshell installed."
-echo ""
-echo "  Next steps:"
-echo "    1. Edit the UID in the service file:"
-echo "       sudo nano /etc/systemd/system/m-webshell.service"
-echo "    2. Start the service:"
-echo "       sudo systemctl daemon-reload"
-echo "       sudo systemctl start m-webshell"
-echo "    3. Scan the QR code:"
-echo "       m-webshell show-secret"
-echo ""
-echo "  Then navigate to: https://your-domain/system/manage-<TOTP>/"
+echo "  Navigate to: https://your-domain/system/manage-<TOTP>/"
 echo ""
